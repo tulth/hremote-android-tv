@@ -112,17 +112,13 @@ mqttMsgToEventCmd device topicPrefix butEcPairs msg =
 
 mainApp :: IO ()
 mainApp = do
-  ------------------------------------------------------------
   let buttons = (fst <$> buttonEventcodePairs)
   let buttonTopics = (\b -> topicPrefix ++ b) <$> buttons
   let topics = buttonTopics
   let procCfg = setStdin createPipe
                 $ setStdout createPipe
                 $ setStderr closed
-                -- "mosquitto_sub -F \"MSG %t %p\" -h mqtt-broker -t home/test/set"
-                -- (makeMqttCmd)
                 $ shell (makeMqttCmd defaultMqttBroker topics)
-                -- "echo hello!") :: String
   withProcessTerm_ procCfg $ \p -> do
     forever $ hGetLine (getStdout p) >>=
       (\l -> print $ mqttMsgToEventCmd' =<< parseMqttLine l)
@@ -131,21 +127,3 @@ mainApp = do
   putStrLn "Lost connection to subprocess"
   where topicPrefix = "home/downstairs/shield/button/"
         mqttMsgToEventCmd' = mqttMsgToEventCmd defaultInputDevice topicPrefix buttonEventcodePairs
-  ------------------------------------------------------------        
-    -- (out, err) <- readProcess_ "mosquitto_sub -F \"MSG %t %p\" -h mqtt-broker -t home/test/set"
-    -- print (out :: ByteString)
-    -- print (err :: ByteString)  
-  ------------------------------------------------------------        
-  -- let catConfig = setStdin createPipe
-  --               $ setStdout createPipe
-  --               $ setStderr closed
-  --                 "cat"
-
-  -- withProcessTerm_ catConfig $ \p -> do
-  --     hPutStrLn (getStdin p) "Hello!"
-  --     hFlush (getStdin p)
-  --     hGetLine (getStdout p) >>= print
-
-  --     hClose (getStdin p)
-  ------------------------------------------------------------        
-  --  putStrLn "mainApp"
