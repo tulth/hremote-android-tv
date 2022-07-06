@@ -1,2 +1,3 @@
 cradle:
   stack:
+    component: "hremote-android-tv:lib"

@@ -25,7 +25,9 @@ source-repository head
 
 library
   exposed-modules:
+      Event
       Lib
+      MosquittoWrap
   other-modules:
       Paths_hremote_android_tv
   hs-source-dirs:
