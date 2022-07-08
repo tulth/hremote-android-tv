@@ -149,6 +149,4 @@ mainApp = do
   queue <- newTBMQueueIO 16
   concurrently_
     (mqttWatch queue `finally` atomically (closeTBMQueue queue))
-    (catch (eventProcess queue)
-     (\e -> if ioe_type e == ResourceVanished then eventProcess queue else
-         throw e))
+    (eventProcess queue)
