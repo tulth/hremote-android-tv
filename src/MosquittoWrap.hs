@@ -12,7 +12,6 @@ module MosquittoWrap
 import Data.List.Extra
   (
     lower
---  , (!?)
   )
 
 import qualified Data.Map as M
@@ -66,11 +65,10 @@ makeMqttCmd host topics =
         topicsToArgs = concatMap (" -t " ++) 
 
 
--- helper that is sometimes missing from data list extra
+-- nice helper that is missing from data list extra in some versions
 (!?) :: [a] -> Int -> Maybe a
 xs !? n
   | n < 0     = Nothing
-             -- Definition adapted from GHC.List
   | otherwise = foldr (\x r k -> case k of
                                    0 -> Just x
                                    _ -> r (k-1)) (const Nothing) xs n

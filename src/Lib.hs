@@ -104,8 +104,6 @@ mqttWatch queue = do
 
 eventSendLoop :: TBMQueue Int -> Handle -> IO ()
 eventSendLoop queue outHandle = forever $ do
---  pendingChars <- eventPendingRead inHandle ""
---  when (pendingChars /= "") $ putStr pendingChars
   mEventCode <- atomically $ readTBMQueue queue
   case mEventCode of
     Nothing -> return ()
@@ -116,11 +114,6 @@ eventSendLoop queue outHandle = forever $ do
       hFlush outHandle
   where inputDevice = defaultInputDevice
 
--- eventPrintLoop :: Handle -> IO ()
--- eventPrintLoop inHandle = forever $ do
---   adbLine <- hGetLine inHandle
---   putStrLn $ "adb shell reponse: " ++ adbLine
-
 eventPrintLoop :: Handle -> IO ()
 eventPrintLoop inHandle = forever $ do
   eAdbLine <- safeHGetLine inHandle
@@ -128,19 +121,6 @@ eventPrintLoop inHandle = forever $ do
     Right adbLine ->
       putStrLn $ "adb shell reponse: " ++ adbLine
     Left _ -> return ()
-
--- safeEventPendingRead :: Handle -> String -> IO (String)
--- safeHGetChar :: Handle -> IO (Either () String)
--- safeHGetChar h = tryJust (guard . isEOFError) (hGetChar h)
-
--- eventPendingRead :: Handle -> String -> IO String
--- eventPendingRead inHandle pendingChars = do
---   hasAChar <- hReady inHandle
---   if hasAChar then do
---     inChar <- hGetChar inHandle
---     eventPendingRead inHandle (pendingChars ++ [inChar])
---   else
---     return pendingChars
 
 eventProcess :: TBMQueue Int -> IO ()
 eventProcess queue =
@@ -162,9 +142,6 @@ eventProcess queue =
                        $ setStdout createPipe
                        $ setStderr closed
                        $ shell adbConnectCommand
-        -- concurrently_
-          -- (eventSendLoop queue (getStdin adbProc))
-          -- (eventPrintLoop (getStdout adbProc)))
 
 mainApp :: IO ()
 mainApp = do
@@ -175,34 +152,3 @@ mainApp = do
     (catch (eventProcess queue)
      (\e -> if ioe_type e == ResourceVanished then eventProcess queue else
          throw e))
-     --(eventProcess queue)
-
--- mainApp :: IO ()
--- mainApp = forever $ do
---   putStrLn $ "connecting to mosquitto with command: " ++ mosquittoCmd
---   putStrLn $ "connecting to adb shell with command: " ++ adbConnectCommand
---   withProcessTerm_ mosquittoProcCfg $ \mosquittoProc -> do
---     withProcessTerm_ adbProcCfg $ \adbProc -> do
---       sleep 1
---       putStrLn "HERE0"
---       mec <- myGetExitCode adbProc
---       print mec
---       putStrLn "HERE1"
---       lineLoop (getStdout mosquittoProc) (getStdin adbProc) (getStdout adbProc)
---       putStrLn "HERE2"
---     putStrLn "HERE3"
---   putStrLn "Lost connection to mosquitto_sub subprocess.  Sleeping..."
---   sleep 10
---   where buttons = fst <$> buttonEventcodePairs
---         topicPrefix = "home/downstairs/shield/button/"
---         topics = (topicPrefix ++) <$> buttons
---         mosquittoCmd = makeMqttCmd defaultMqttBroker topics
---         adbConnectCommand = defaultAdbConnectCommand
---         mosquittoProcCfg = setStdin createPipe
---                   $ setStdout createPipe
---                   $ setStderr closed
---                   $ shell mosquittoCmd
---         adbProcCfg = setStdin createPipe
---                   $ setStdout createPipe
---                   $ setStderr closed
---                   $ shell adbConnectCommand
