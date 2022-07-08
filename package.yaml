@@ -26,6 +26,10 @@ dependencies:
 # - tuple
 - containers
 - typed-process
+- async
+- stm
+- stm-chans
+- unix
 
 library:
   source-dirs: src
@@ -38,6 +42,8 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    # - -prof
+    # - -fprof-auto
     dependencies:
     - hremote-android-tv
 
