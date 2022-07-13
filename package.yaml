@@ -39,11 +39,14 @@ executables:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
+    - -static
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     # - -prof
     # - -fprof-auto
+    cc-options: -static
+    ld-options: -static -pthread
     dependencies:
     - hremote-android-tv
 

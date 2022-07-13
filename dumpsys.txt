@@ -1,0 +1,428 @@
+dumpsys input
+INPUT MANAGER (dumpsys input)
+
+Input Manager State:
+  Interactive: false
+  System UI Visibility: 0x0
+  Pointer Speed: 0
+  Pointer Gestures Enabled: true
+  Show Touches: false
+  Pointer Capture Enabled: false
+
+Event Hub State:
+  BuiltInKeyboardId: -2
+  Devices:
+    -3: NVIDIA Virtual Mouse
+      Classes: 0x40000009
+      Path: <NVVirtualMouse>
+      Enabled: true
+      Descriptor: 5345c6da1d26ddaf0af78bf97d14a420216933cb
+      Location: 
+      ControllerNumber: 0
+      UniqueId: <NVVirtualMouse>
+      Identifier: bus=0x0000, vendor=0x0000, product=0x0000, version=0x0000
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      HaveKeyboardLayoutOverlay: false
+    -1: Virtual
+      Classes: 0x40000023
+      Path: <virtual>
+      Enabled: true
+      Descriptor: a718a782d34bc767f4689c232d64d527998ea7fd
+      Location: 
+      ControllerNumber: 0
+      UniqueId: <virtual>
+      Identifier: bus=0x0000, vendor=0x0000, product=0x0000, version=0x0000
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Virtual.kcm
+      ConfigurationFile: 
+      HaveKeyboardLayoutOverlay: false
+    1: tegra-hda HDMI/DP,pcm=3
+      Classes: 0x00000080
+      Path: /dev/input/event1
+      Enabled: true
+      Descriptor: 060c3d9eac53c5f9dba2ffa27884e2a0eb495880
+      Location: ALSA
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0000, vendor=0x0000, product=0x0000, version=0x0000
+      KeyLayoutFile: 
+      KeyCharacterMapFile: 
+      ConfigurationFile: 
+      HaveKeyboardLayoutOverlay: false
+    2: gpio-keys
+      Classes: 0x00000001
+      Path: /dev/input/event0
+      Enabled: true
+      Descriptor: 485d69228e24f5e46da1598745890b214130dbc4
+      Location: gpio-keys/input0
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0019, vendor=0x0001, product=0x0001, version=0x0100
+      KeyLayoutFile: /system/usr/keylayout/gpio-keys.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      HaveKeyboardLayoutOverlay: false
+    4: virtual-search
+      Classes: 0x00000021
+      Path: /dev/input/event3
+      Enabled: true
+      Descriptor: fbf6fca090843dc77a8276073fde7970d6d0ba3f
+      Location: android.os.BinderProxy@999b968
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0006, vendor=0x0000, product=0x0000, version=0x0001
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      HaveKeyboardLayoutOverlay: false
+    6: IPControl_UPnP_RemoteService
+      Classes: 0x80000029
+      Path: /dev/input/event5
+      Enabled: true
+      Descriptor: 3c93e34ab020f831f08b0e6467b38e95eede5ed3
+      Location: android.os.BinderProxy@c9a666d
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0005, vendor=0x0955, product=0x0000, version=0x0001
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      HaveKeyboardLayoutOverlay: false
+    7: shield-ask-remote
+      Classes: 0x00000021
+      Path: /dev/input/event6
+      Enabled: true
+      Descriptor: 137ed351dc29bdd841f3d4ef52ca783bfc13c160
+      Location: android.os.BinderProxy@d8efcd4
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0006, vendor=0x0000, product=0x0000, version=0x0001
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      HaveKeyboardLayoutOverlay: false
+    47: virtual-search
+      Classes: 0x00000021
+      Path: /dev/input/event2
+      Enabled: true
+      Descriptor: 38c59f5a8771de8bd485da05030eb001094d7936
+      Location: android.os.BinderProxy@57a985
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0006, vendor=0x0000, product=0x0000, version=0x0001
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      HaveKeyboardLayoutOverlay: false
+    111: shield-ask-remote
+      Classes: 0x00000021
+      Path: /dev/input/event4
+      Enabled: true
+      Descriptor: 1d9ebcc95993269cfdb8e1ff0c8b183db3d7f961
+      Location: android.os.BinderProxy@86bcee1
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0006, vendor=0x0000, product=0x0000, version=0x0001
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      HaveKeyboardLayoutOverlay: false
+    1021: shield-ask-remote
+      Classes: 0x00000021
+      Path: /dev/input/event7
+      Enabled: true
+      Descriptor: 322253ff4ce5f74dddd94f2a5025c4e1cc41fdee
+      Location: android.os.BinderProxy@3b68ee4
+      ControllerNumber: 0
+      UniqueId: 
+      Identifier: bus=0x0006, vendor=0x0000, product=0x0000, version=0x0001
+      KeyLayoutFile: /system/usr/keylayout/Generic.kl
+      KeyCharacterMapFile: /system/usr/keychars/Generic.kcm
+      ConfigurationFile: 
+      HaveKeyboardLayoutOverlay: false
+
+Input Reader State:
+  Device -3: NVIDIA Virtual Mouse
+    Generation: 9822
+    IsExternal: false
+    HasMic:     false
+    Sources: 0x00002103
+    KeyboardType: 1
+    Motion Ranges:
+      X: source=0x00002002, min=0.000, max=1919.000, flat=0.000, fuzz=0.000, resolution=0.000
+      Y: source=0x00002002, min=0.000, max=1079.000, flat=0.000, fuzz=0.000, resolution=0.000
+      PRESSURE: source=0x00002002, min=0.000, max=1.000, flat=0.000, fuzz=0.000, resolution=0.000
+      HSCROLL: source=0x00002002, min=-1.000, max=1.000, flat=0.000, fuzz=0.000, resolution=0.000
+    Keyboard Input Mapper:
+      Parameters:
+        HasAssociatedDisplay: false
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 0
+    Cursor Input Mapper:
+      Parameters:
+        HasAssociatedDisplay: true
+        Mode: pointer
+        OrientationAware: false
+      XScale: 1.000
+      YScale: 1.000
+      XPrecision: 1.000
+      YPrecision: 1.000
+      HaveVWheel: false
+      HaveHWheel: true
+      VWheelScale: 1.000
+      HWheelScale: 1.000
+      Orientation: 0
+      ButtonState: 0x00000000
+      Down: false
+      DownTime: 0
+  Device -1: Virtual
+    Generation: 5
+    IsExternal: false
+    HasMic:     false
+    Sources: 0x00000301
+    KeyboardType: 2
+    Keyboard Input Mapper:
+      Parameters:
+        HasAssociatedDisplay: false
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 2
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 0
+  Device 1: tegra-hda HDMI/DP,pcm=3
+    Generation: 9
+    IsExternal: false
+    HasMic:     false
+    Sources: 0x80000000
+    KeyboardType: 0
+    Switch Input Mapper:
+      SwitchValues: 0
+  Device 2: gpio-keys
+    Generation: 7
+    IsExternal: false
+    HasMic:     false
+    Sources: 0x00000101
+    KeyboardType: 1
+    Keyboard Input Mapper:
+      Parameters:
+        HasAssociatedDisplay: false
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 0
+  Device 4: virtual-search
+    Generation: 18
+    IsExternal: false
+    HasMic:     false
+    Sources: 0x00000301
+    KeyboardType: 1
+    Keyboard Input Mapper:
+      Parameters:
+        HasAssociatedDisplay: false
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 0
+  Device 6: IPControl_UPnP_RemoteService
+    Generation: 9823
+    IsExternal: true
+    HasMic:     false
+    Sources: 0x00002303
+    KeyboardType: 1
+    Motion Ranges:
+      X: source=0x00002002, min=0.000, max=1919.000, flat=0.000, fuzz=0.000, resolution=0.000
+      Y: source=0x00002002, min=0.000, max=1079.000, flat=0.000, fuzz=0.000, resolution=0.000
+      PRESSURE: source=0x00002002, min=0.000, max=1.000, flat=0.000, fuzz=0.000, resolution=0.000
+      VSCROLL: source=0x00002002, min=-1.000, max=1.000, flat=0.000, fuzz=0.000, resolution=0.000
+      HSCROLL: source=0x00002002, min=-1.000, max=1.000, flat=0.000, fuzz=0.000, resolution=0.000
+    Keyboard Input Mapper:
+      Parameters:
+        HasAssociatedDisplay: false
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 0
+    Cursor Input Mapper:
+      Parameters:
+        HasAssociatedDisplay: true
+        Mode: pointer
+        OrientationAware: false
+      XScale: 1.000
+      YScale: 1.000
+      XPrecision: 1.000
+      YPrecision: 1.000
+      HaveVWheel: true
+      HaveHWheel: true
+      VWheelScale: 1.000
+      HWheelScale: 1.000
+      Orientation: 0
+      ButtonState: 0x00000000
+      Down: false
+      DownTime: 0
+  Device 7: shield-ask-remote
+    Generation: 25
+    IsExternal: false
+    HasMic:     false
+    Sources: 0x00000301
+    KeyboardType: 1
+    Keyboard Input Mapper:
+      Parameters:
+        HasAssociatedDisplay: false
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 0
+  Device 47: virtual-search
+    Generation: 498
+    IsExternal: false
+    HasMic:     false
+    Sources: 0x00000301
+    KeyboardType: 1
+    Keyboard Input Mapper:
+      Parameters:
+        HasAssociatedDisplay: false
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 0
+  Device 111: shield-ask-remote
+    Generation: 1295
+    IsExternal: false
+    HasMic:     false
+    Sources: 0x00000301
+    KeyboardType: 1
+    Keyboard Input Mapper:
+      Parameters:
+        HasAssociatedDisplay: false
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 9544337356400000
+  Device 1021: shield-ask-remote
+    Generation: 9288
+    IsExternal: false
+    HasMic:     false
+    Sources: 0x00000301
+    KeyboardType: 1
+    Keyboard Input Mapper:
+      Parameters:
+        HasAssociatedDisplay: false
+        OrientationAware: false
+        HandlesKeyRepeat: false
+      KeyboardType: 1
+      Orientation: 0
+      KeyDowns: 0 keys currently down
+      MetaState: 0x0
+      DownTime: 0
+  Configuration:
+    ExcludedDeviceNames: []
+    VirtualKeyQuietTime: 0.0ms
+    PointerVelocityControlParameters: scale=1.000, lowThreshold=500.000, highThreshold=3000.000, acceleration=3.000
+    WheelVelocityControlParameters: scale=1.000, lowThreshold=15.000, highThreshold=50.000, acceleration=4.000
+    PointerGesture:
+      Enabled: true
+      QuietInterval: 100.0ms
+      DragMinSwitchSpeed: 50.0px/s
+      TapInterval: 150.0ms
+      TapDragInterval: 300.0ms
+      TapSlop: 20.0px
+      MultitouchSettleInterval: 100.0ms
+      MultitouchMinDistance: 15.0px
+      SwipeTransitionAngleCosine: 0.3
+      SwipeMaxWidthRatio: 0.2
+      MovementSpeedRatio: 0.8
+      ZoomSpeedRatio: 0.3
+      Viewports:
+        ViewportInternal:
+          Viewport: displayId=0, orientation=0, uniqueId='', logicalFrame=[0, 0, 1920, 1080], physicalFrame=[0, 0, 3840, 2160], deviceSize=[3840, 2160]
+        ViewportExternal:
+          Viewport: displayId=0, orientation=0, uniqueId='', logicalFrame=[0, 0, 1920, 1080], physicalFrame=[0, 0, 3840, 2160], deviceSize=[3840, 2160]
+        ViewportVirtual:
+
+Input Dispatcher State:
+  DispatchEnabled: 1
+  DispatchFrozen: 0
+  FocusedApplication: name='AppWindowToken{83e598d token=Token{62a6a24 ActivityRecord{6a692b7 u0 com.google.android.youtube.tv/com.google.android.apps.youtube.tv.activity.MainActivity t10250}}}', dispatchingTimeout=5000.000ms
+  FocusedWindow: name='Window{61921f5 u0 com.google.android.youtube.tv/com.google.android.apps.youtube.tv.activity.MainActivity}'
+  TouchStates: <no displays touched>
+  Windows:
+    0: name='Window{7c994ac u0 InputMethod}', displayId=0, paused=false, hasFocus=false, hasWallpaper=false, visible=false, canReceiveKeys=false, flags=0x81800108, type=0x000007db, layer=0, frame=[0,668][1920,1080], scale=1.000000, touchableRegion=[0,668][1920,1080], inputFeatures=0x00000000, ownerPid=5190, ownerUid=10013, dispatchingTimeout=5000.000ms
+    1: name='Window{e22136a u0 DockedStackDivider}', displayId=0, paused=false, hasFocus=false, hasWallpaper=false, visible=false, canReceiveKeys=false, flags=0x21840028, type=0x000007f2, layer=0, frame=[0,0][0,0], scale=1.000000, touchableRegion=[0,-96][96,96], inputFeatures=0x00000000, ownerPid=4026, ownerUid=10023, dispatchingTimeout=5000.000ms
+    2: name='Window{61921f5 u0 com.google.android.youtube.tv/com.google.android.apps.youtube.tv.activity.MainActivity}', displayId=0, paused=false, hasFocus=true, hasWallpaper=false, visible=true, canReceiveKeys=true, flags=0x818101a0, type=0x00000001, layer=0, frame=[0,0][1920,1080], scale=1.000000, touchableRegion=[0,0][1920,1080], inputFeatures=0x00000000, ownerPid=23436, ownerUid=10057, dispatchingTimeout=5000.000ms
+    3: name='Window{e4e5e9f u0 dxidev.sideloadchannel3/dxidev.sideloadchannel3.HomeActivity}', displayId=0, paused=false, hasFocus=false, hasWallpaper=false, visible=false, canReceiveKeys=false, flags=0x01910520, type=0x00000001, layer=0, frame=[0,0][1920,1080], scale=1.000000, touchableRegion=[0,0][1920,1080], inputFeatures=0x00000000, ownerPid=12499, ownerUid=10087, dispatchingTimeout=5000.000ms
+    4: name='Window{4a10c22 u0 tv.twitch.android.app/tv.twitch.android.apps.TwitchActivity}', displayId=0, paused=false, hasFocus=false, hasWallpaper=false, visible=false, canReceiveKeys=false, flags=0x01810720, type=0x00000001, layer=0, frame=[0,0][1920,1080], scale=1.000000, touchableRegion=[0,0][1920,1080], inputFeatures=0x00000000, ownerPid=28036, ownerUid=10085, dispatchingTimeout=5000.000ms
+    5: name='Window{e9d5366 u0 com.google.android.videos/com.google.android.apps.play.movies.tv.usecase.home.TvHomeActivity}', displayId=0, paused=false, hasFocus=false, hasWallpaper=false, visible=false, canReceiveKeys=false, flags=0x83810120, type=0x00000001, layer=0, frame=[0,0][1920,1080], scale=1.000000, touchableRegion=[0,0][1920,1080], inputFeatures=0x00000000, ownerPid=1103, ownerUid=10055, dispatchingTimeout=5000.000ms
+    6: name='Window{a02f96e u0 com.android.systemui.ImageWallpaper}', displayId=0, paused=false, hasFocus=false, hasWallpaper=false, visible=false, canReceiveKeys=false, flags=0x00010318, type=0x000007dd, layer=0, frame=[0,0][1920,1080], scale=1.000000, touchableRegion=[0,0][1920,1080], inputFeatures=0x00000000, ownerPid=4026, ownerUid=10023, dispatchingTimeout=5000.000ms
+  MonitoringChannels:
+    0: 'WindowManager (server)'
+  RecentQueue: length=10
+    KeyEvent(deviceId=111, source=0x00000301, action=DOWN, flags=0x00000008, keyCode=22, scanCode=106, metaState=0x00000000, repeatCount=0), policyFlags=0x62000000, age=6550060.0ms
+    KeyEvent(deviceId=111, source=0x00000301, action=UP, flags=0x00000008, keyCode=22, scanCode=106, metaState=0x00000000, repeatCount=0), policyFlags=0x62000000, age=6550001.5ms
+    KeyEvent(deviceId=111, source=0x00000301, action=DOWN, flags=0x00000008, keyCode=21, scanCode=105, metaState=0x00000000, repeatCount=0), policyFlags=0x62000000, age=6543363.5ms
+    KeyEvent(deviceId=111, source=0x00000301, action=UP, flags=0x00000008, keyCode=21, scanCode=105, metaState=0x00000000, repeatCount=0), policyFlags=0x62000000, age=6543308.0ms
+    KeyEvent(deviceId=111, source=0x00000301, action=DOWN, flags=0x00000008, keyCode=66, scanCode=28, metaState=0x00000000, repeatCount=0), policyFlags=0x62000000, age=6542660.5ms
+    KeyEvent(deviceId=111, source=0x00000301, action=UP, flags=0x00000008, keyCode=66, scanCode=28, metaState=0x00000000, repeatCount=0), policyFlags=0x62000000, age=6542588.0ms
+    KeyEvent(deviceId=111, source=0x00000301, action=DOWN, flags=0x00000008, keyCode=66, scanCode=28, metaState=0x00000000, repeatCount=0), policyFlags=0x62000000, age=6533043.5ms
+    KeyEvent(deviceId=111, source=0x00000301, action=UP, flags=0x00000008, keyCode=66, scanCode=28, metaState=0x00000000, repeatCount=0), policyFlags=0x62000000, age=6532965.5ms
+    KeyEvent(deviceId=-1, source=0x00000101, action=DOWN, flags=0x00000000, keyCode=223, scanCode=0, metaState=0x00000000, repeatCount=0), policyFlags=0x2b000000, age=6177261.5ms
+    KeyEvent(deviceId=-1, source=0x00000101, action=UP, flags=0x00000000, keyCode=223, scanCode=0, metaState=0x00000000, repeatCount=0), policyFlags=0x2b000000, age=6177261.5ms
+  PendingEvent: <none>
+  InboundQueue: <empty>
+  ReplacedKeys: <empty>
+  Connections:
+    0: channelName='WindowManager (server)', windowName='monitor', status=NORMAL, monitor=true, inputPublisherBlocked=false
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    1: channelName='e9d5366 com.google.android.videos/com.google.android.apps.play.movies.tv.usecase.home.TvHomeActivity (server)', windowName='Window{e9d5366 u0 com.google.android.videos/com.google.android.apps.play.movies.tv.usecase.home.TvHomeActivity}', status=NORMAL, monitor=false, inputPublisherBlocked=false
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    2: channelName='e22136a DockedStackDivider (server)', windowName='Window{e22136a u0 DockedStackDivider}', status=NORMAL, monitor=false, inputPublisherBlocked=false
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    3: channelName='7c994ac InputMethod (server)', windowName='Window{7c994ac u0 InputMethod}', status=NORMAL, monitor=false, inputPublisherBlocked=false
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    4: channelName='a02f96e com.android.systemui.ImageWallpaper (server)', windowName='Window{a02f96e u0 com.android.systemui.ImageWallpaper}', status=NORMAL, monitor=false, inputPublisherBlocked=false
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    5: channelName='61921f5 com.google.android.youtube.tv/com.google.android.apps.youtube.tv.activity.MainActivity (server)', windowName='Window{61921f5 u0 com.google.android.youtube.tv/com.google.android.apps.youtube.tv.activity.MainActivity}', status=NORMAL, monitor=false, inputPublisherBlocked=false
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    6: channelName='e4e5e9f dxidev.sideloadchannel3/dxidev.sideloadchannel3.HomeActivity (server)', windowName='Window{e4e5e9f u0 dxidev.sideloadchannel3/dxidev.sideloadchannel3.HomeActivity}', status=NORMAL, monitor=false, inputPublisherBlocked=false
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+    7: channelName='4a10c22 tv.twitch.android.app/tv.twitch.android.apps.TwitchActivity (server)', windowName='Window{4a10c22 u0 tv.twitch.android.app/tv.twitch.android.apps.TwitchActivity}', status=NORMAL, monitor=false, inputPublisherBlocked=false
+      OutboundQueue: <empty>
+      WaitQueue: <empty>
+  AppSwitch: not pending
+  Configuration:
+    KeyRepeatDelay: 50.0ms
+    KeyRepeatTimeout: 500.0ms
+

@@ -11,7 +11,7 @@ module Lib
     , mqttMsgToEventCmd
     ) where
 
-import System.IO (hGetLine, hGetChar, hReady, hPutStrLn, hFlush, Handle)
+import System.IO (hGetLine, hGetChar, hReady, hPutStrLn, putChar, hFlush, Handle)
 
 import System.Time.Extra (sleep)
 
@@ -48,8 +48,11 @@ import Control.Concurrent.STM.TBMQueue (TBMQueue
                                        )
 
 import System.Posix (Handler(Ignore), installHandler, sigPIPE)
+
 import MosquittoWrap
 import Event
+import ParseDumpsys
+import Data.Maybe (listToMaybe, fromMaybe)
 
 mqttMsgToEventCmd :: String -> String -> [(String, Int)] -> MqttMsg -> Maybe String
 mqttMsgToEventCmd device topicPrefix butEcPairs msg =
@@ -85,6 +88,15 @@ lineLoop queue mosquittoReadHandle =
       Right eventCode -> lineAction queue eventCode >> lineLoop queue mosquittoReadHandle
   )
 
+hReadUntilNotReady :: Handle -> IO String
+hReadUntilNotReady h = do
+  hReady h >>=
+    (\case
+        True -> hGetChar h >>= (\char -> (char :) <$> hReadUntilNotReady h)
+        False -> return ""
+    )
+
+
 mqttWatch :: TBMQueue Int -> IO ()
 mqttWatch queue = do
   forever $ do
@@ -102,24 +114,23 @@ mqttWatch queue = do
                   $ setStderr closed
                   $ shell mosquittoCmd
 
-eventSendLoop :: TBMQueue Int -> Handle -> IO ()
-eventSendLoop queue outHandle = forever $ do
+eventSendLoop :: String -> TBMQueue Int -> Handle -> IO ()
+eventSendLoop inputDev queue outHandle = forever $ do
   mEventCode <- atomically $ readTBMQueue queue
   case mEventCode of
     Nothing -> return ()
     Just eventCode -> do
-      let cmd = eventCodeToEventCmd inputDevice eventCode
+      let cmd = eventCodeToEventCmd inputDev eventCode
       putStrLn $ "adb shell cmd: " ++ cmd
       hPutStrLn outHandle cmd
       hFlush outHandle
-  where inputDevice = defaultInputDevice
 
 eventPrintLoop :: Handle -> IO ()
 eventPrintLoop inHandle = forever $ do
   eAdbLine <- safeHGetLine inHandle
   case eAdbLine of
     Right adbLine ->
-      putStrLn $ "adb shell reponse: " ++ adbLine
+      putStrLn $ "adb shell response: " ++ adbLine
     Left _ -> return ()
 
 eventProcess :: TBMQueue Int -> IO ()
@@ -127,9 +138,18 @@ eventProcess queue =
   catch (
   do
     putStrLn $ "connecting to adb shell with command: " ++ adbConnectCommand
-    withProcessTerm adbProcCfg $ \adbProc ->
-      concurrently_ 
-        (eventSendLoop queue (getStdin adbProc))
+    withProcessTerm adbProcCfg $ \adbProc -> do
+      hPutStrLn (getStdin adbProc) "dumpsys input"
+      hFlush (getStdin adbProc)
+      sleep 1
+      dumpsysInputResult <- hReadUntilNotReady (getStdout adbProc)
+      let inputDevs = parseDumpsysGetEventDevs dumpsysInputResult
+      putStrLn $ "detected inputDevs: " ++ show inputDevs
+      let mInputDev = listToMaybe inputDevs
+      let inputDev = fromMaybe defaultInputDevice mInputDev
+      putStrLn $ "selected inputDev: " ++ inputDev
+      concurrently_
+        (eventSendLoop inputDev queue (getStdin adbProc))
         (eventPrintLoop (getStdout adbProc)))
   (\e -> if ioe_type e == ResourceVanished
          then do
