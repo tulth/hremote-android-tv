@@ -41,11 +41,10 @@ import GHC.IO.Exception (ioe_type, IOErrorType(ResourceVanished))
 
 import Control.Concurrent.Async (concurrently_)
 import Control.Concurrent.STM (atomically)
-import Control.Concurrent.STM.TBMQueue (TBMQueue
-                                       , newTBMQueueIO
-                                       , readTBMQueue
-                                       , writeTBMQueue
-                                       , closeTBMQueue
+import Control.Concurrent.STM.TBQueue (TBQueue
+                                       , newTBQueueIO
+                                       , readTBQueue
+                                       , writeTBQueue
                                        )
 
 import System.Posix (Handler(Ignore), installHandler, sigPIPE)
@@ -59,18 +58,18 @@ mqttMsgToEventCmd :: String -> String -> [(String, Int)] -> MqttMsg -> Maybe Str
 mqttMsgToEventCmd device topicPrefix butEcPairs msg =
   eventCodeToEventCmd device <$> mqttMsgToEventCode topicPrefix butEcPairs msg
 
-mqttMsgAction :: TBMQueue Int -> MqttMsg -> IO ()
+mqttMsgAction :: TBQueue Int -> MqttMsg -> IO ()
 mqttMsgAction queue msg =
   case eventCodeMaybe of
     Nothing       -> putStrLn $ "Unable to convert mqtt msg to event command: " ++ show msg
     Just eventCode -> do
       putStrLn $ "Sending event: " ++ show eventCode
-      atomically $ writeTBMQueue queue eventCode
+      atomically $ writeTBQueue queue eventCode
   where topicPrefix = "home/downstairs/shield/button/"
         mqttMsgToEventCode' = mqttMsgToEventCode topicPrefix buttonEventcodePairs
         eventCodeMaybe = mqttMsgToEventCode' msg
 
-lineAction :: TBMQueue Int -> String -> IO ()
+lineAction :: TBQueue Int -> String -> IO ()
 lineAction queue l =
   maybe
     (putStrLn $ "Failed Parsing line: " ++ l) -- on parse error
@@ -81,7 +80,7 @@ lineAction queue l =
 safeHGetLine :: Handle -> IO (Either () String)
 safeHGetLine h = tryJust (guard . isEOFError) (hGetLine h)
 
-lineLoop :: TBMQueue Int -> Handle -> IO ()
+lineLoop :: TBQueue Int -> Handle -> IO ()
 lineLoop queue mosquittoReadHandle =
   safeHGetLine mosquittoReadHandle >>=
   (\case
@@ -98,7 +97,7 @@ hReadUntilNotReady h = do
     )
 
 
-mqttWatch :: TBMQueue Int -> IO ()
+mqttWatch :: TBQueue Int -> IO ()
 mqttWatch queue = do
   forever $ do
     putStrLn $ "connecting to mosquitto with command: " ++ mosquittoCmd
@@ -115,16 +114,13 @@ mqttWatch queue = do
                   $ setStderr closed
                   $ shell mosquittoCmd
 
-eventSendLoop :: String -> TBMQueue Int -> Handle -> IO ()
+eventSendLoop :: String -> TBQueue Int -> Handle -> IO ()
 eventSendLoop inputDev queue outHandle = forever $ do
-  mEventCode <- atomically $ readTBMQueue queue
-  case mEventCode of
-    Nothing -> return ()
-    Just eventCode -> do
-      let cmd = eventCodeToEventCmd inputDev eventCode
-      putStrLn $ "adb shell cmd: " ++ cmd
-      hPutStrLn outHandle cmd
-      hFlush outHandle
+  eventCode <- atomically $ readTBQueue queue
+  let cmd = eventCodeToEventCmd inputDev eventCode
+  putStrLn $ "adb shell cmd: " ++ cmd
+  hPutStrLn outHandle cmd
+  hFlush outHandle
 
 eventPrintLoop :: Handle -> IO ()
 eventPrintLoop inHandle = forever $ do
@@ -134,7 +130,7 @@ eventPrintLoop inHandle = forever $ do
       putStrLn $ "adb shell response: " ++ adbLine
     Left _ -> return ()
 
-eventProcess :: TBMQueue Int -> IO ()
+eventProcess :: TBQueue Int -> IO ()
 eventProcess queue =
   catch (
   do
@@ -169,7 +165,7 @@ mainApp = do
   installHandler sigPIPE Ignore Nothing
   hSetBuffering stdout LineBuffering
   hSetBuffering stderr LineBuffering
-  queue <- newTBMQueueIO 16
+  queue <- newTBQueueIO 16
   concurrently_
-    (mqttWatch queue `finally` atomically (closeTBMQueue queue))
+    (mqttWatch queue)
     (eventProcess queue)
