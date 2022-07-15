@@ -11,7 +11,8 @@ module Lib
     , mqttMsgToEventCmd
     ) where
 
-import System.IO (hGetLine, hGetChar, hReady, hPutStrLn, putChar, hFlush, Handle)
+import System.IO (hGetLine, hGetChar, hReady, hPutStrLn, putChar, hFlush, Handle
+                 , hSetBuffering, stdout, stderr, BufferMode(LineBuffering))
 
 import System.Time.Extra (sleep)
 
@@ -166,6 +167,8 @@ eventProcess queue =
 mainApp :: IO ()
 mainApp = do
   installHandler sigPIPE Ignore Nothing
+  hSetBuffering stdout LineBuffering
+  hSetBuffering stderr LineBuffering
   queue <- newTBMQueueIO 16
   concurrently_
     (mqttWatch queue `finally` atomically (closeTBMQueue queue))
