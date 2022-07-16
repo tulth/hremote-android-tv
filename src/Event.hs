@@ -1,14 +1,19 @@
 module Event
   (
-    defaultInputDevice
+    defaultEventDevice
   , defaultAdbConnectCommand
   , buttonEventcodePairs
   , eventCodeToEventCmd
   ) where
 
-defaultInputDevice = "/dev/input/event3"
+defaultEventDevice :: String
+defaultEventDevice = "/dev/input/event3"
+
+defaultAdbTarget :: String
 defaultAdbTarget = "nvidia-shield-tv"
-defaultAdbConnectCommand = "adb connect " ++ defaultAdbTarget ++ " ; adb shell"
+
+defaultAdbConnectCommand :: String
+defaultAdbConnectCommand = "adb -s " ++ defaultAdbTarget ++ " shell"
 
 buttonEventcodePairs :: [(String, Int)]
 buttonEventcodePairs = [ ("dpad_up"    , 103)

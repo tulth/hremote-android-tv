@@ -2,6 +2,7 @@ import Data.Maybe (isNothing)
 
 import Lib
 import ParseDumpsys
+import Data.Functor ((<&>))
 import Data.List (isPrefixOf)
 
 assert :: Bool -> String -> String -> IO ()
@@ -46,17 +47,36 @@ mqttMsgToEventCmdTest =
        ++ "sendevent /dev/input/event3 0 0 0"))
   && isNothing (mqttMsgToEventCmd' $ MqttMsg "home/downstairs/shield/button/home" "0")
 
+parseDumpsysGetEventDevsTest' :: String -> Bool
+parseDumpsysGetEventDevsTest' fileContent =
+  (parseDumpsysGetEventDevs fileContent ==
+    ["/dev/input/event2"
+    , "/dev/input/event3"
+    , "/dev/input/event4"
+    , "/dev/input/event5"
+    , "/dev/input/event6"
+    , "/dev/input/event7"])
+  && null (parseDumpsysGetEventDevs partialInsufficientFileContent0)
+  && null (parseDumpsysGetEventDevs partialInsufficientFileContent1)
+  && null (parseDumpsysGetEventDevs partialInsufficientFileContent2)
+  && null (parseDumpsysGetEventDevs partialInsufficientFileContent3)
+  && (parseDumpsysGetEventDevs partialSufficientFileContent0 ==
+    ["/dev/input/event3"])
+  && (parseDumpsysGetEventDevs partialSufficientFileContent1 ==
+    ["/dev/input/event3", "/dev/input/event5"])
+  && (parseDumpsysGetEventDevs partialSufficientFileContent2 ==
+    ["/dev/input/event3", "/dev/input/event5", "/dev/input/event6"])
+  where partialInsufficientFileContent0 = []
+        partialInsufficientFileContent1 = unlines $ take 1 $ lines fileContent
+        partialInsufficientFileContent2 = unlines $ take 30 $ lines fileContent
+        partialInsufficientFileContent3 = unlines $ take 68 $ lines fileContent
+        partialSufficientFileContent0 = unlines $ take 69 $ lines fileContent
+        partialSufficientFileContent1 = unlines $ take 82 $ lines fileContent
+        partialSufficientFileContent2 = unlines $ take 95 $ lines fileContent
+
 parseDumpsysGetEventDevsTest :: IO (Bool)
-parseDumpsysGetEventDevsTest = do
-  fileContent <- readFile "dumpsys.txt"
-  -- print $ parseDumpsysGetEventDevs fileContent
-  return (parseDumpsysGetEventDevs fileContent ==
-          ["/dev/input/event2"
-          , "/dev/input/event3"
-          , "/dev/input/event4"
-          , "/dev/input/event5"
-          , "/dev/input/event6"
-          , "/dev/input/event7"])
+parseDumpsysGetEventDevsTest =
+  parseDumpsysGetEventDevsTest' <$> readFile "dumpsys.txt"
 
 topicTestTest :: Bool
 topicTestTest =

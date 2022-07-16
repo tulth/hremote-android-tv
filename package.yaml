@@ -1,10 +1,10 @@
 name:                hremote-android-tv
 version:             0.1.0.0
-github:              "githubuser/hremote-android-tv"
+github:              "tulth/hremote-android-tv"
 license:             BSD3
-author:              "Author name here"
+author:              "tulth"
 maintainer:          "example@example.com"
-copyright:           "2022 Author name here"
+copyright:           "2022 Tulth"
 
 extra-source-files:
 - README.md
@@ -33,6 +33,20 @@ dependencies:
 
 library:
   source-dirs: src
+  ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Wcpp-undef
+  - -Widentities
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wmissing-export-lists
+  - -Wmissing-home-modules
+  - -Wpartial-fields
+  - -Wredundant-constraints
+  - -Wunused-imports
+  - -Wunused-local-binds
+  # - -Werror
 
 executables:
   hremote-android-tv-exe:
@@ -43,6 +57,19 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wall
+    - -Wcompat
+    - -Wcpp-undef
+    - -Widentities
+    - -Wincomplete-record-updates
+    - -Wincomplete-uni-patterns
+    - -Wmissing-export-lists
+    - -Wmissing-home-modules
+    - -Wpartial-fields
+    - -Wredundant-constraints
+    - -Wunused-imports
+    - -Wunused-local-binds
+    # - -Werror
     # - -prof
     # - -fprof-auto
     cc-options: -static

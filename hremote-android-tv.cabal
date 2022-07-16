@@ -7,11 +7,11 @@ cabal-version: 1.12
 name:           hremote-android-tv
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/githubuser/hremote-android-tv#readme>
-homepage:       https://github.com/githubuser/hremote-android-tv#readme
-bug-reports:    https://github.com/githubuser/hremote-android-tv/issues
-author:         Author name here
+homepage:       https://github.com/tulth/hremote-android-tv#readme
+bug-reports:    https://github.com/tulth/hremote-android-tv/issues
+author:         tulth
 maintainer:     example@example.com
-copyright:      2022 Author name here
+copyright:      2022 Tulth
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -21,7 +21,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/hremote-android-tv
+  location: https://github.com/tulth/hremote-android-tv
 
 library
   exposed-modules:
@@ -29,10 +29,12 @@ library
       Lib
       MosquittoWrap
       ParseDumpsys
+      Timeout
   other-modules:
       Paths_hremote_android_tv
   hs-source-dirs:
       src
+  ghc-options: -Wall -Wcompat -Wcpp-undef -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wunused-imports -Wunused-local-binds
   build-depends:
       async
     , base >=4.7 && <5
@@ -51,7 +53,7 @@ executable hremote-android-tv-exe
       Paths_hremote_android_tv
   hs-source-dirs:
       app
-  ghc-options: -static -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -static -threaded -rtsopts -with-rtsopts=-N -Wall -Wcompat -Wcpp-undef -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wunused-imports -Wunused-local-binds
   cc-options: -static
   ld-options: -static -pthread
   build-depends:

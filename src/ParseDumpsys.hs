@@ -8,24 +8,17 @@ module ParseDumpsys
     ) where
 
 import Text.Read (readMaybe)
-import Control.Applicative ((<$>))
 import Data.List (isPrefixOf, sort)
 import Data.Functor ((<&>))
 import Data.Bits ((.&.))
 
--- import qualified Data.Map as M
 data Cat = Cat String [Cat] deriving Show
-
--- newtype Cat2 = Cat2 (M.Map String [Cat2]) deriving Show
-
-defaultIndentLevel :: Int
-defaultIndentLevel = 4 -- leading spaces
 
 level :: Int -> String -> Int
 level l = (`div` l) . length . takeWhile (== ' ')
 
 parse :: Int -> [String] -> [Cat]
-parse l [] = []
+parse _ [] = []
 parse l (x : xs) = Cat (trim x) (parse l children) : parse l sisters
     where
         level' = level l
@@ -79,8 +72,6 @@ getAcceptableEventDevs devs = sort $
   >>= (\(Cat _ children) -> filter (topicTest (isPrefixOf "Path: ")) children)
   <&> getTopic
   <&> drop (length "Path: ")
-  where stripPathPrefix :: String -> String
-        stripPathPrefix = drop (length "Path: ")
 
 parseDumpsysGetEventDevs' :: Int -> String -> [String]
 parseDumpsysGetEventDevs' l s = 

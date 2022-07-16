@@ -20,6 +20,7 @@ type MqttTopic = String
 type MqttPayload = String
 data MqttMsg = MqttMsg MqttTopic MqttPayload deriving (Show, Eq)
 
+defaultMqttBroker :: String
 defaultMqttBroker = "mqtt-broker"
 
 parseMqttLine :: String -> Maybe MqttMsg

@@ -11,34 +11,30 @@ module Lib
     , mqttMsgToEventCmd
     ) where
 
-import System.IO (hGetLine, hGetChar, hReady, hPutStrLn, putChar, hFlush, Handle
+import Data.Either.Extra (eitherToMaybe)
+
+import System.IO (hGetLine, hGetChar, hReady, hPutStrLn, hFlush, Handle
                  , hSetBuffering, stdout, stderr, BufferMode(LineBuffering))
 
-import Control.Monad ( forever, guard, when )
+import Control.Monad ( forever, guard, join )
 
-import System.Process.Typed
-  (
-    createPipe
-  , withProcessTerm_
-  , withProcessTerm
-  , getExitCode
-  , ExitCode
-  , Process
-  , setStdin
-  , setStdout
-  , setStderr
-  , getStdout
-  , getStdin
-  , closed
-  , shell
-  )
-import Control.Exception (tryJust, finally, catch, throw
-                         , SomeException)
+import System.Process.Typed (createPipe
+                            , withProcessTerm
+                            , withProcessWait_
+                            , setStdin
+                            , setStdout
+                            , setStderr
+                            , getStdout
+                            , getStdin
+                            , closed
+                            , shell
+                            , ExitCodeException(..)
+                            )
 import System.IO.Error (isEOFError)
 import GHC.IO.Exception (ioe_type, IOErrorType(ResourceVanished, NoSuchThing))
-
+import Control.Exception (tryJust, catch, throw)
 import Control.Concurrent (threadDelay)
-import Control.Concurrent.Async (concurrently_, race_, race,)
+import Control.Concurrent.Async (race_,)
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TBQueue (TBQueue
                                        , newTBQueueIO
@@ -47,17 +43,15 @@ import Control.Concurrent.STM.TBQueue (TBQueue
                                        , writeTBQueue
                                        )
 
-import System.Posix (Handler(Ignore), installHandler, sigPIPE)
-
-import Data.Functor ((<&>))
-
 import MosquittoWrap
 import Event
 import ParseDumpsys
-import Data.Maybe (listToMaybe, fromMaybe)
-import System.Posix.Signals (sigCHLD)
+import Timeout (timeout)
+-- import Data.ByteString.Char8 (hGetLine)
 
-eventSendTimeout = 30 * 60
+eventSendTimeout :: Int
+-- eventSendTimeout = 30 * 60 * 1000 * 1000
+eventSendTimeout = 10 * 1000 * 1000
 
 mqttMsgToEventCmd :: String -> String -> [(String, Int)] -> MqttMsg -> Maybe String
 mqttMsgToEventCmd device topicPrefix butEcPairs msg =
@@ -82,15 +76,15 @@ lineAction queue l =
     (parseMqttLine l)                         -- parse the line produce a maybe
     where mqttMsgAction' = mqttMsgAction queue
 
-safeHGetLine :: Handle -> IO (Either () String)
-safeHGetLine h = tryJust (guard . isEOFError) (hGetLine h)
+guardEof :: (Handle -> IO a) -> Handle -> IO (Maybe a)
+guardEof hFunc h = eitherToMaybe <$> tryJust (guard . isEOFError) (hFunc h)
 
 lineLoop :: TBQueue Int -> Handle -> IO ()
 lineLoop queue mosquittoReadHandle =
-  safeHGetLine mosquittoReadHandle >>=
+  guardEof hGetLine mosquittoReadHandle >>=
   (\case
-      Left err -> putStrLn "hit eof in lineloop"
-      Right eventCode -> lineAction queue eventCode >> lineLoop queue mosquittoReadHandle
+      Nothing -> putStrLn "hit eof in lineloop"
+      Just eventCode -> lineAction queue eventCode >> lineLoop queue mosquittoReadHandle
   )
 
 hReadUntilNotReady :: Handle -> IO String
@@ -101,14 +95,13 @@ hReadUntilNotReady h = do
         False -> return ""
     )
 
-
 mqttWatch :: TBQueue Int -> IO ()
 mqttWatch queue = do
   forever $ do
     putStrLn $ "connecting to mosquitto with command: " ++ mosquittoCmd
     withProcessTerm mosquittoProcCfg $ \mosquittoProc -> do
       lineLoop queue (getStdout mosquittoProc)
-    putStrLn "Lost connection to mosquitto_sub subprocess.  Sleeping..."
+    putStrLn "Lost connection to mosquitto_sub subprocess.  Sleeping and retrying..."
     sleep 10
   where buttons = fst <$> buttonEventcodePairs
         topicPrefix = "home/downstairs/shield/button/"
@@ -119,26 +112,21 @@ mqttWatch queue = do
                   $ setStderr closed
                   $ shell mosquittoCmd
 
-
+sleep :: Int -> IO ()
 sleep = threadDelay . (* 1000000)
 
 readTBQueueIO :: TBQueue a -> IO a
 readTBQueueIO = atomically . readTBQueue
 
-readTBQueueWithTimeoutIO :: Int -> TBQueue a -> IO (Maybe a)
-readTBQueueWithTimeoutIO timeLimitSeconds queue =
-  race
-    (sleep timeLimitSeconds)
-    (readTBQueueIO queue)
-  <&> (\case
-          Right x ->  Just x
-          Left _ -> Nothing)
-
 eventSendLoop :: String -> TBQueue Int -> Handle -> IO ()
 eventSendLoop inputDev queue outHandle = do
-  readTBQueueWithTimeoutIO eventSendTimeout queue
+  timeout eventSendTimeout (readTBQueueIO queue)
   >>= (\case
-          Nothing -> putStrLn "eventSendLoop timed out"
+          Nothing -> do
+            putStrLn "eventSendLoop timed out"
+            hPutStrLn outHandle "exit"
+            hFlush outHandle
+            threadDelay 1
           Just eventCode -> do
             let cmd = eventCodeToEventCmd inputDev eventCode
             putStrLn $ "adb shell cmd: " ++ cmd
@@ -149,41 +137,98 @@ eventSendLoop inputDev queue outHandle = do
 
 eventPrintLoop :: Handle -> IO ()
 eventPrintLoop inHandle = forever $ do
-  eAdbLine <- safeHGetLine inHandle
+  eAdbLine <- guardEof hGetLine inHandle
   case eAdbLine of
-    Right adbLine ->
+    Just adbLine ->
       putStrLn $ "adb shell response: " ++ adbLine
-    Left _ -> return ()
+    Nothing -> return ()
+
+-- | Read handle until the string read decodes to usable event devices
+getEventDev :: Handle -> IO String
+getEventDev = loop ""
+  where
+    loop :: String -> Handle -> IO String
+    loop rxCharAccum rxH = do
+      newChars <- hReadUntilNotReady rxH
+      let dumpsysInputResult = rxCharAccum ++ newChars
+      let evDevs = parseDumpsysGetEventDevs dumpsysInputResult
+      case evDevs of
+        x : _ -> do
+          putStrLn $ "detected evDevs: " ++ show evDevs ++ ", selecting evDev " ++ x
+          return x
+        _ -> loop dumpsysInputResult rxH
+
+eventLoop
+  :: TBQueue Int -- ^ queue of events to send
+  -> Handle -- ^ subprocess rx handle (ie stdin)
+  -> Handle -- ^ subprocess tx handle (ie stdout)
+  -> IO ()
+eventLoop queue rxH txH = do
+  hPutStrLn txH "dumpsys input"
+  hFlush txH
+  mEvDev <- join <$> timeout t3Seconds (guardEof getEventDev rxH)
+  maybe (return ())
+    (\evDev -> race_
+      (eventSendLoop evDev queue txH)
+      (eventPrintLoop rxH))
+    mEvDev
+  -- let evDev = fromMaybe defaultEventDevice mEvDev
+  -- race_
+  --   (eventSendLoop evDev queue txH)
+  --   (eventPrintLoop rxH)
+  where t3Seconds = 3 * 1000 * 1000
 
 eventProcess :: TBQueue Int -> IO ()
 eventProcess queue = do
-  atomically $ peekTBQueue queue  -- wait until something is in the queue
+  putStrLn "eventProcess: waiting until there is an event in the queue"
+  _ <- atomically $ peekTBQueue queue  -- wait until something is in the queue
   catch
     ( do
     putStrLn $ "connecting to adb shell with command: " ++ adbConnectCommand
-    withProcessTerm adbProcCfg $ \adbProc -> do
-      hPutStrLn (getStdin adbProc) "dumpsys input"
-      hFlush (getStdin adbProc)
-      threadDelay 500000
-      dumpsysInputResult <- hReadUntilNotReady (getStdout adbProc)
-      let inputDevs = parseDumpsysGetEventDevs dumpsysInputResult
-      putStrLn $ "detected inputDevs: " ++ show inputDevs
-      let mInputDev = listToMaybe inputDevs
-      let inputDev = fromMaybe defaultInputDevice mInputDev
-      putStrLn $ "selected inputDev: " ++ inputDev
-      race_
-        (eventSendLoop inputDev queue (getStdin adbProc))
-        (eventPrintLoop (getStdout adbProc))
+    withProcessWait_ adbProcCfg $ \adbProc ->
+      eventLoop queue (getStdout adbProc) (getStdin adbProc)
     )
+--    (\(SomeException e) -> print e)
     (\e ->
         if ioe_type e == ResourceVanished then do
-          putStrLn "Lost connection to adb shell subprocess.  Sleeping..."
+          putStrLn "Lost connection to adb shell subprocess.  Sleeping and retrying..."
           sleep 10
           eventProcess queue
         -- skip error waitForProcess: does not exist (No child processes)
         else if ioe_type e == NoSuchThing then return ()
-        else throw e)
-  putStrLn "Dropping connection to adb shell"
+        else do
+          print e
+          throw e)
+    `catch` (\case
+                ExitCodeException {} ->
+                  putStrLn "Exit code from adb shell subprocess.  Sleeping..."
+                  >> sleep 10
+                  >> eventProcess queue)
+
+
+    --     ExitCodeException {} -> putStrLn "0"
+    --     _ ->
+    --       if ioe_type e == ResourceVanished then do
+    --         putStrLn "Lost connection to adb shell subprocess.  Sleeping..."
+    --         sleep 10
+    --         eventProcess queue
+    --       -- skip error waitForProcess: does not exist (No child processes)
+    --       else if ioe_type e == NoSuchThing then return ()
+    --       else throw e
+    -- )
+        -- _ :: ExitCodeException -> (
+        --   putStrLn "Exit code from adb shell subprocess.  Sleeping..."
+        --   >> sleep 10
+        --   >> eventProcess queue)
+        -- _ :: SomeException -> 
+        --   if ioe_type e == ResourceVanished then do
+        --     putStrLn "Lost connection to adb shell subprocess.  Sleeping..."
+        --     sleep 10
+        --     eventProcess queue
+        --   -- skip error waitForProcess: does not exist (No child processes)
+        --   else if ioe_type e == NoSuchThing then return ()
+        --   else throw e)
+  putStrLn "eventProcess: Dropping connection to adb shell"
   eventProcess queue
   where adbConnectCommand = defaultAdbConnectCommand
         adbProcCfg = setStdin createPipe
@@ -193,11 +238,11 @@ eventProcess queue = do
 
 mainApp :: IO ()
 mainApp = do
-  installHandler sigPIPE Ignore Nothing
-  installHandler sigCHLD Ignore Nothing
+--  _ <- installHandler sigPIPE Ignore Nothing
+--  _ <- installHandler sigCHLD Ignore Nothing
   hSetBuffering stdout LineBuffering
   hSetBuffering stderr LineBuffering
-  queue <- newTBQueueIO 16
-  concurrently_
+  queue <- newTBQueueIO 8
+  forever $ race_
     (mqttWatch queue)
     (eventProcess queue)
