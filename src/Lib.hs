@@ -47,11 +47,9 @@ import MosquittoWrap
 import Event
 import ParseDumpsys
 import Timeout (timeout)
--- import Data.ByteString.Char8 (hGetLine)
 
 eventSendTimeout :: Int
--- eventSendTimeout = 30 * 60 * 1000 * 1000
-eventSendTimeout = 10 * 1000 * 1000
+eventSendTimeout = 10 * 60 * 1000 * 1000
 
 mqttMsgToEventCmd :: String -> String -> [(String, Int)] -> MqttMsg -> Maybe String
 mqttMsgToEventCmd device topicPrefix butEcPairs msg =
@@ -126,7 +124,7 @@ eventSendLoop inputDev queue outHandle = do
             putStrLn "eventSendLoop timed out"
             hPutStrLn outHandle "exit"
             hFlush outHandle
-            threadDelay 1
+            threadDelay 100000
           Just eventCode -> do
             let cmd = eventCodeToEventCmd inputDev eventCode
             putStrLn $ "adb shell cmd: " ++ cmd
@@ -188,7 +186,6 @@ eventProcess queue = do
     withProcessWait_ adbProcCfg $ \adbProc ->
       eventLoop queue (getStdout adbProc) (getStdin adbProc)
     )
---    (\(SomeException e) -> print e)
     (\e ->
         if ioe_type e == ResourceVanished then do
           putStrLn "Lost connection to adb shell subprocess.  Sleeping and retrying..."
@@ -204,30 +201,6 @@ eventProcess queue = do
                   putStrLn "Exit code from adb shell subprocess.  Sleeping..."
                   >> sleep 10
                   >> eventProcess queue)
-
-
-    --     ExitCodeException {} -> putStrLn "0"
-    --     _ ->
-    --       if ioe_type e == ResourceVanished then do
-    --         putStrLn "Lost connection to adb shell subprocess.  Sleeping..."
-    --         sleep 10
-    --         eventProcess queue
-    --       -- skip error waitForProcess: does not exist (No child processes)
-    --       else if ioe_type e == NoSuchThing then return ()
-    --       else throw e
-    -- )
-        -- _ :: ExitCodeException -> (
-        --   putStrLn "Exit code from adb shell subprocess.  Sleeping..."
-        --   >> sleep 10
-        --   >> eventProcess queue)
-        -- _ :: SomeException -> 
-        --   if ioe_type e == ResourceVanished then do
-        --     putStrLn "Lost connection to adb shell subprocess.  Sleeping..."
-        --     sleep 10
-        --     eventProcess queue
-        --   -- skip error waitForProcess: does not exist (No child processes)
-        --   else if ioe_type e == NoSuchThing then return ()
-        --   else throw e)
   putStrLn "eventProcess: Dropping connection to adb shell"
   eventProcess queue
   where adbConnectCommand = defaultAdbConnectCommand
@@ -238,8 +211,6 @@ eventProcess queue = do
 
 mainApp :: IO ()
 mainApp = do
---  _ <- installHandler sigPIPE Ignore Nothing
---  _ <- installHandler sigCHLD Ignore Nothing
   hSetBuffering stdout LineBuffering
   hSetBuffering stderr LineBuffering
   queue <- newTBQueueIO 8
