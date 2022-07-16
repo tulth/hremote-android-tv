@@ -14,8 +14,6 @@ module Lib
 import System.IO (hGetLine, hGetChar, hReady, hPutStrLn, putChar, hFlush, Handle
                  , hSetBuffering, stdout, stderr, BufferMode(LineBuffering))
 
-import System.Time.Extra (sleep)
-
 import Control.Monad ( forever, guard, when )
 
 import System.Process.Typed
@@ -37,22 +35,29 @@ import System.Process.Typed
 import Control.Exception (tryJust, finally, catch, throw
                          , SomeException)
 import System.IO.Error (isEOFError)
-import GHC.IO.Exception (ioe_type, IOErrorType(ResourceVanished))
+import GHC.IO.Exception (ioe_type, IOErrorType(ResourceVanished, NoSuchThing))
 
-import Control.Concurrent.Async (concurrently_)
+import Control.Concurrent (threadDelay)
+import Control.Concurrent.Async (concurrently_, race_, race,)
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TBQueue (TBQueue
                                        , newTBQueueIO
                                        , readTBQueue
+                                       , peekTBQueue
                                        , writeTBQueue
                                        )
 
 import System.Posix (Handler(Ignore), installHandler, sigPIPE)
 
+import Data.Functor ((<&>))
+
 import MosquittoWrap
 import Event
 import ParseDumpsys
 import Data.Maybe (listToMaybe, fromMaybe)
+import System.Posix.Signals (sigCHLD)
+
+eventSendTimeout = 30 * 60
 
 mqttMsgToEventCmd :: String -> String -> [(String, Int)] -> MqttMsg -> Maybe String
 mqttMsgToEventCmd device topicPrefix butEcPairs msg =
@@ -114,13 +119,33 @@ mqttWatch queue = do
                   $ setStderr closed
                   $ shell mosquittoCmd
 
+
+sleep = threadDelay . (* 1000000)
+
+readTBQueueIO :: TBQueue a -> IO a
+readTBQueueIO = atomically . readTBQueue
+
+readTBQueueWithTimeoutIO :: Int -> TBQueue a -> IO (Maybe a)
+readTBQueueWithTimeoutIO timeLimitSeconds queue =
+  race
+    (sleep timeLimitSeconds)
+    (readTBQueueIO queue)
+  <&> (\case
+          Right x ->  Just x
+          Left _ -> Nothing)
+
 eventSendLoop :: String -> TBQueue Int -> Handle -> IO ()
-eventSendLoop inputDev queue outHandle = forever $ do
-  eventCode <- atomically $ readTBQueue queue
-  let cmd = eventCodeToEventCmd inputDev eventCode
-  putStrLn $ "adb shell cmd: " ++ cmd
-  hPutStrLn outHandle cmd
-  hFlush outHandle
+eventSendLoop inputDev queue outHandle = do
+  readTBQueueWithTimeoutIO eventSendTimeout queue
+  >>= (\case
+          Nothing -> putStrLn "eventSendLoop timed out"
+          Just eventCode -> do
+            let cmd = eventCodeToEventCmd inputDev eventCode
+            putStrLn $ "adb shell cmd: " ++ cmd
+            hPutStrLn outHandle cmd
+            hFlush outHandle
+            eventSendLoop inputDev queue outHandle
+      )
 
 eventPrintLoop :: Handle -> IO ()
 eventPrintLoop inHandle = forever $ do
@@ -131,38 +156,45 @@ eventPrintLoop inHandle = forever $ do
     Left _ -> return ()
 
 eventProcess :: TBQueue Int -> IO ()
-eventProcess queue =
-  catch (
-  do
+eventProcess queue = do
+  atomically $ peekTBQueue queue  -- wait until something is in the queue
+  catch
+    ( do
     putStrLn $ "connecting to adb shell with command: " ++ adbConnectCommand
     withProcessTerm adbProcCfg $ \adbProc -> do
       hPutStrLn (getStdin adbProc) "dumpsys input"
       hFlush (getStdin adbProc)
-      sleep 1
+      threadDelay 500000
       dumpsysInputResult <- hReadUntilNotReady (getStdout adbProc)
       let inputDevs = parseDumpsysGetEventDevs dumpsysInputResult
       putStrLn $ "detected inputDevs: " ++ show inputDevs
       let mInputDev = listToMaybe inputDevs
       let inputDev = fromMaybe defaultInputDevice mInputDev
       putStrLn $ "selected inputDev: " ++ inputDev
-      concurrently_
+      race_
         (eventSendLoop inputDev queue (getStdin adbProc))
-        (eventPrintLoop (getStdout adbProc)))
-  (\e -> if ioe_type e == ResourceVanished
-         then do
-               putStrLn "Lost connection to adb shell subprocess.  Sleeping..."
-               sleep 10
-               eventProcess queue
-         else throw e)
-    where adbConnectCommand = defaultAdbConnectCommand
-          adbProcCfg = setStdin createPipe
-                       $ setStdout createPipe
-                       $ setStderr closed
-                       $ shell adbConnectCommand
+        (eventPrintLoop (getStdout adbProc))
+    )
+    (\e ->
+        if ioe_type e == ResourceVanished then do
+          putStrLn "Lost connection to adb shell subprocess.  Sleeping..."
+          sleep 10
+          eventProcess queue
+        -- skip error waitForProcess: does not exist (No child processes)
+        else if ioe_type e == NoSuchThing then return ()
+        else throw e)
+  putStrLn "Dropping connection to adb shell"
+  eventProcess queue
+  where adbConnectCommand = defaultAdbConnectCommand
+        adbProcCfg = setStdin createPipe
+                     $ setStdout createPipe
+                     $ setStderr closed
+                     $ shell adbConnectCommand
 
 mainApp :: IO ()
 mainApp = do
   installHandler sigPIPE Ignore Nothing
+  installHandler sigCHLD Ignore Nothing
   hSetBuffering stdout LineBuffering
   hSetBuffering stderr LineBuffering
   queue <- newTBQueueIO 16
