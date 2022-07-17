@@ -11,12 +11,14 @@ module Lib
     , mqttMsgToEventCmd
     ) where
 
-import Data.Either.Extra (eitherToMaybe)
+import System.IO (hGetLine
+                 , Handle
+                 , hSetBuffering
+                 , stdout
+                 , stderr
+                 , BufferMode(LineBuffering))
 
-import System.IO (hGetLine, hGetChar, hReady, hPutStrLn, hFlush, Handle
-                 , hSetBuffering, stdout, stderr, BufferMode(LineBuffering))
-
-import Control.Monad ( forever, guard, join )
+import Control.Monad ( forever, join, void, when )
 
 import System.Process.Typed (createPipe
                             , withProcessTerm
@@ -30,9 +32,8 @@ import System.Process.Typed (createPipe
                             , shell
                             , ExitCodeException(..)
                             )
-import System.IO.Error (isEOFError)
 import GHC.IO.Exception (ioe_type, IOErrorType(ResourceVanished, NoSuchThing))
-import Control.Exception (tryJust, catch, throw)
+import Control.Exception (catch, throw)
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (race_,)
 import Control.Concurrent.STM (atomically)
@@ -47,6 +48,10 @@ import MosquittoWrap
 import Event
 import ParseDumpsys
 import Timeout (timeout)
+import HandleHelpers (guardEof, hReadUntilNotReady, hPutStrLnWithTimeout)
+
+hPutStrLnTimeout :: Int
+hPutStrLnTimeout = 500 * 1000
 
 eventSendTimeout :: Int
 eventSendTimeout = 10 * 60 * 1000 * 1000
@@ -74,9 +79,6 @@ lineAction queue l =
     (parseMqttLine l)                         -- parse the line produce a maybe
     where mqttMsgAction' = mqttMsgAction queue
 
-guardEof :: (Handle -> IO a) -> Handle -> IO (Maybe a)
-guardEof hFunc h = eitherToMaybe <$> tryJust (guard . isEOFError) (hFunc h)
-
 lineLoop :: TBQueue Int -> Handle -> IO ()
 lineLoop queue mosquittoReadHandle =
   guardEof hGetLine mosquittoReadHandle >>=
@@ -84,14 +86,6 @@ lineLoop queue mosquittoReadHandle =
       Nothing -> putStrLn "hit eof in lineloop"
       Just eventCode -> lineAction queue eventCode >> lineLoop queue mosquittoReadHandle
   )
-
-hReadUntilNotReady :: Handle -> IO String
-hReadUntilNotReady h = do
-  hReady h >>=
-    (\case
-        True -> hGetChar h >>= (\char -> (char :) <$> hReadUntilNotReady h)
-        False -> return ""
-    )
 
 mqttWatch :: TBQueue Int -> IO ()
 mqttWatch queue = do
@@ -121,20 +115,19 @@ eventSendLoop inputDev queue outHandle = do
   timeout eventSendTimeout (readTBQueueIO queue)
   >>= (\case
           Nothing -> do
-            putStrLn "eventSendLoop timed out"
-            hPutStrLn outHandle "exit"
-            hFlush outHandle
-            threadDelay 100000
+            putStrLn "eventSendLoop: timed out.  Closing adb shell."
+            void $ shellPutStrLn "exit"
           Just eventCode -> do
             let cmd = eventCodeToEventCmd inputDev eventCode
             putStrLn $ "adb shell cmd: " ++ cmd
-            hPutStrLn outHandle cmd
-            hFlush outHandle
-            eventSendLoop inputDev queue outHandle
+            success <- shellPutStrLn cmd
+            when success $ eventSendLoop inputDev queue outHandle
       )
+  where shellPutStrLn = hPutStrLnWithTimeout hPutStrLnTimeout outHandle
 
 eventPrintLoop :: Handle -> IO ()
-eventPrintLoop inHandle = forever $ do
+eventPrintLoop inHandle = do
+  putStrLn "eventPrintLoop"
   eAdbLine <- guardEof hGetLine inHandle
   case eAdbLine of
     Just adbLine ->
@@ -162,19 +155,16 @@ eventLoop
   -> Handle -- ^ subprocess tx handle (ie stdout)
   -> IO ()
 eventLoop queue rxH txH = do
-  hPutStrLn txH "dumpsys input"
-  hFlush txH
-  mEvDev <- join <$> timeout t3Seconds (guardEof getEventDev rxH)
-  maybe (return ())
-    (\evDev -> race_
-      (eventSendLoop evDev queue txH)
-      (eventPrintLoop rxH))
-    mEvDev
-  -- let evDev = fromMaybe defaultEventDevice mEvDev
-  -- race_
-  --   (eventSendLoop evDev queue txH)
-  --   (eventPrintLoop rxH)
+  success <- shellPutStrLn "dumpsys input"
+  when success $ do
+    mEvDev <- join <$> timeout t3Seconds (guardEof getEventDev rxH)
+    maybe (return ())
+      (\evDev -> race_
+        (eventSendLoop evDev queue txH)
+        (eventPrintLoop rxH))
+      mEvDev
   where t3Seconds = 3 * 1000 * 1000
+        shellPutStrLn = hPutStrLnWithTimeout hPutStrLnTimeout txH
 
 eventProcess :: TBQueue Int -> IO ()
 eventProcess queue = do
@@ -182,38 +172,45 @@ eventProcess queue = do
   _ <- atomically $ peekTBQueue queue  -- wait until something is in the queue
   catch
     ( do
-    putStrLn $ "connecting to adb shell with command: " ++ adbConnectCommand
-    withProcessWait_ adbProcCfg $ \adbProc ->
-      eventLoop queue (getStdout adbProc) (getStdin adbProc)
+        putStrLn $ "connecting to adb shell with command: " ++ adbConnectCommand
+        withProcessWait_ adbProcCfg $ \adbProc ->
+          eventLoop queue (getStdout adbProc) (getStdin adbProc)
+        putStrLn "eventProcess: adb shell subprocess ended."
     )
     (\e ->
         if ioe_type e == ResourceVanished then do
-          putStrLn "Lost connection to adb shell subprocess.  Sleeping and retrying..."
-          sleep 10
-          eventProcess queue
+          restart $ "eventProcess: ResourceVanished: Lost connection to adb shell subprocess."
+            ++ "  Sleeping and retrying..."
         -- skip error waitForProcess: does not exist (No child processes)
-        else if ioe_type e == NoSuchThing then return ()
+        else if ioe_type e == NoSuchThing then do
+          restart $ "eventProcess: NoSuchThing: Lost connection to adb shell subprocess."
+            ++ "  Sleeping and retrying..."
         else do
           print e
           throw e)
     `catch` (\case
                 ExitCodeException {} ->
-                  putStrLn "Exit code from adb shell subprocess.  Sleeping..."
-                  >> sleep 10
-                  >> eventProcess queue)
-  putStrLn "eventProcess: Dropping connection to adb shell"
+                  restart "Exit code from adb shell subprocess.  Sleeping...")
   eventProcess queue
   where adbConnectCommand = defaultAdbConnectCommand
         adbProcCfg = setStdin createPipe
                      $ setStdout createPipe
                      $ setStderr closed
                      $ shell adbConnectCommand
+        restartDelaySec = 10
+        restart :: String -> IO ()
+        restart msg = do
+          putStrLn msg
+          sleep restartDelaySec
+          eventProcess queue
 
 mainApp :: IO ()
 mainApp = do
   hSetBuffering stdout LineBuffering
   hSetBuffering stderr LineBuffering
   queue <- newTBQueueIO 8
-  forever $ race_
-    (mqttWatch queue)
-    (eventProcess queue)
+  forever $ do
+    race_
+      (mqttWatch queue)
+      (eventProcess queue)
+    putStrLn "mainApp: eventProcess or mqttWatch died, restarting"

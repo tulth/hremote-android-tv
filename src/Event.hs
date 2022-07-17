@@ -13,7 +13,7 @@ defaultAdbTarget :: String
 defaultAdbTarget = "nvidia-shield-tv"
 
 defaultAdbConnectCommand :: String
-defaultAdbConnectCommand = "adb -s " ++ defaultAdbTarget ++ " shell"
+defaultAdbConnectCommand = "adb connect " ++ defaultAdbTarget ++ " && adb -s " ++ defaultAdbTarget ++ " shell"
 
 buttonEventcodePairs :: [(String, Int)]
 buttonEventcodePairs = [ ("dpad_up"    , 103)
