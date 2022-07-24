@@ -50,7 +50,7 @@ withAdbShell adbHost adbClient = do
           setStdin createPipe $
           setStdout createPipe $
           setStderr closed processConfig
-    in withProcessWait customProcessConfig (const $ return ())
+    in withProcessWait_ customProcessConfig (const $ return ())
   logInfo $ fromString $ "launching adb shell with command: " ++ adbShellCmd
   shell adbShellCmd $ \processConfig ->
     let customProcessConfig =
@@ -59,6 +59,6 @@ withAdbShell adbHost adbClient = do
           setStdin createPipe $
           setStdout createPipe $
           setStderr closed processConfig
-    in withProcessWait customProcessConfig adbClient
+    in withProcessWait_ customProcessConfig adbClient
   where adbConnectCmd = mkAdbConnectCommand adbHost
         adbShellCmd = mkAdbShellCommand adbHost
