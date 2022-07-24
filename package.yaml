@@ -20,70 +20,54 @@ extra-source-files:
 description:         Please see the README on GitHub at <https://github.com/githubuser/hremote-android-tv#readme>
 
 dependencies:
-- base >= 4.7 && < 5
-- bytestring
-- extra
-# - tuple
-- containers
+- base >= 4.11 && < 10
+- rio >= 0.1.12.0
 - typed-process
-- async
-- stm
-- stm-chans
-- unix
+- directory
+- text
+- extra
+- bytestring
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Wcpp-undef
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wmissing-export-lists
+- -Wmissing-home-modules
+- -Wpartial-fields
+- -Wredundant-constraints
+- -Wunused-imports
+- -Wunused-local-binds
+# - -Werror
 
 library:
   source-dirs: src
-  ghc-options:
-  - -Wall
-  - -Wcompat
-  - -Wcpp-undef
-  - -Widentities
-  - -Wincomplete-record-updates
-  - -Wincomplete-uni-patterns
-  - -Wmissing-export-lists
-  - -Wmissing-home-modules
-  - -Wpartial-fields
-  - -Wredundant-constraints
-  - -Wunused-imports
-  - -Wunused-local-binds
-  # - -Werror
 
 executables:
   hremote-android-tv-exe:
     main:                Main.hs
     source-dirs:         app
+    dependencies:
+    - hremote-android-tv
+    - optparse-simple
+
     ghc-options:
-    - -static
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    - -Wall
-    - -Wcompat
-    - -Wcpp-undef
-    - -Widentities
-    - -Wincomplete-record-updates
-    - -Wincomplete-uni-patterns
-    - -Wmissing-export-lists
-    - -Wmissing-home-modules
-    - -Wpartial-fields
-    - -Wredundant-constraints
-    - -Wunused-imports
-    - -Wunused-local-binds
-    # - -Werror
-    # - -prof
-    # - -fprof-auto
-    cc-options: -static
-    ld-options: -static -pthread
-    dependencies:
-    - hremote-android-tv
 
 tests:
   hremote-android-tv-test:
     main:                Spec.hs
     source-dirs:         test
+    dependencies:
+    - hremote-android-tv
+    - hspec
+
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    dependencies:
-    - hremote-android-tv

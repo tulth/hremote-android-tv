@@ -1,9 +1,11 @@
+{-# LANGUAGE OverloadedStrings #-}
 import Data.Maybe (isNothing)
 
-import Lib
 import ParseDumpsys
-import Data.Functor ((<&>))
 import Data.List (isPrefixOf)
+import Run (mqttMsgToEventCode, mqttMsgToEventCmd)
+import MqttSub
+import Events (eventCodes)
 
 assert :: Bool -> String -> String -> IO ()
 assert test passStatement failStatement = if test
@@ -34,9 +36,10 @@ mqttMsgToEventCodeTest =
   && isNothing (mqttMsgToEventCode' $ MqttMsg "home/downstairs/shield/button/home" "0")
   && isNothing (mqttMsgToEventCode' $ MqttMsg "home/downstairs/shield/button/should_fail" "On")
   && isNothing (mqttMsgToEventCode' (MqttMsg "should_fail2" "On"))
-  where mqttMsgToEventCode' = mqttMsgToEventCode "home/downstairs/shield/button/" buttonEventcodePairs
+  where mqttMsgToEventCode' = mqttMsgToEventCode "home/downstairs/shield/button/" eventCodes
 
-mqttMsgToEventCmd' = mqttMsgToEventCmd "/dev/input/event3" "home/downstairs/shield/button/" buttonEventcodePairs
+mqttMsgToEventCmd' :: MqttMsg -> Maybe String
+mqttMsgToEventCmd' = mqttMsgToEventCmd "/dev/input/event3" "home/downstairs/shield/button/" eventCodes
 
 mqttMsgToEventCmdTest :: Bool
 mqttMsgToEventCmdTest =
