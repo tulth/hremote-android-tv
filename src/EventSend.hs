@@ -21,6 +21,7 @@ eventSendLoop
   => TBQueue Int
   -> m ()
 eventSendLoop queue = do
+  logInfo "eventSendLoop: begin"
   logInfo "eventSendLoop: waiting until there is an event in the queue"
   _ <- atomically $ peekTBQueue queue  -- wait until something is in the queue
   adbShellCatch (withAdbShell "nvidia-shield-tv" $ adbShellClient queue)
@@ -40,6 +41,7 @@ adbShellClient
   -> Process Handle Handle ()
   -> m ()
 adbShellClient queue adbShellProc = do
+  logInfo "adbShellClient: begin"
   liftIO $ BC.hPutStrLn txH "dumpsys input"
   hFlush txH
   mEvDev <- join <$> timeout t3Seconds (guardEof getEventDev rxH)
@@ -77,20 +79,27 @@ adbShellSendLoop
   :: (HasLogFunc env, MonadReader env m, MonadUnliftIO m)
   => String -> TBQueue Int -> Handle -> m ()
 adbShellSendLoop inputDev queue outHandle = do
+  logInfo "adbShellSendLoop: begin"
   timeout eventSendTimeout $ (atomically . readTBQueue) queue
   >>= (\case
           Nothing -> do
-            logInfo "adbShellSendLoop timed out"
-            liftIO $ BC.hPutStrLn outHandle "exit"
-            hFlush outHandle
-            threadDelay 100000
+            _ <- timeout t3Seconds $ do
+              logInfo "adbShellSendLoop: timed out"
+              liftIO $ BC.hPutStrLn outHandle "exit"
+              hFlush outHandle
+              threadDelay 100000
+            return ()
           Just eventCode -> do
             let cmd = BC.pack $ eventCodeToEventCmd inputDev eventCode
             logInfo $ displayBytesUtf8 $ "adb shell cmd: " `BC.append` cmd
-            liftIO $ BC.hPutStrLn outHandle cmd
-            hFlush outHandle
-            adbShellSendLoop inputDev queue outHandle
+            mTimeout <- timeout t3Seconds $ do
+              liftIO $ BC.hPutStrLn outHandle cmd
+              hFlush outHandle
+            case mTimeout of
+              Nothing -> return ()
+              Just _ -> adbShellSendLoop inputDev queue outHandle
       )
+  where t3Seconds = 3 * 1000 * 1000
 
 eventSendTimeout :: Int
 eventSendTimeout = 30 * 1000 * 1000
@@ -100,10 +109,12 @@ adbShellPrintLoop
   =>  Handle
   -> m ()
 adbShellPrintLoop inHandle = do
+  logInfo "adbShellPrintLoop: begin"
   eAdbLine <- guardEof (liftIO . BC.hGetLine) inHandle
   case eAdbLine of
-    Just adbLine ->
+    Just adbLine -> do
       logInfo $ displayBytesUtf8 $ BC.append "adb shell response: " adbLine
+      adbShellPrintLoop inHandle
     Nothing -> do
       logInfo "adbShellPrintLoop: hit EOF on shell - returning"
       return ()
