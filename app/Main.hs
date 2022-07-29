@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Main (main) where
@@ -9,7 +10,11 @@ import RIO.Process
 import Options.Applicative.Simple
 import qualified Paths_hremote_android_tv
 
+import ServerApp (startServer)
+
+
 main :: IO ()
+-- main = startApp
 main = do
   (options, ()) <- simpleOptions
     $(simpleVersion Paths_hremote_android_tv.version)
@@ -37,3 +42,18 @@ main = do
           }
      in runRIO app run
   where defMqttBroker = "mqtt-broker"
+
+
+run :: RIO App ()
+run = do
+  hSetBuffering stdout LineBuffering
+  hSetBuffering stderr LineBuffering
+  queue <- newTBQueueIO 8
+  logInfo "Starting up"
+  forever $ do
+    race_
+      -- (mqttLoop queue)
+      (liftIO $ startServer queue)
+      (eventSendLoop queue)
+    logError "mainApp: eventProcess or mqttWatch died, restarting"
+

@@ -3,8 +3,10 @@ module Events
   (
     eventCodes
   , eventCodeToEventCmd
+  , buttonToEventCode
   ) where
 
+import qualified RIO.Map as M
 
 -- name to eventid to event code mapping
 eventCodes :: [(String, Int)]
@@ -36,3 +38,6 @@ eventCodeToEventCmd device eventCode =
   ++ "; sendevent " ++ device ++ " 1 " ++ show eventCode ++ " 0 "
   ++ "; sendevent " ++ device ++ " 0 0 0"
 
+buttonToEventCode :: String -> Maybe Int
+buttonToEventCode button = buttonEventcodeMap M.!? button
+  where buttonEventcodeMap = M.fromList eventCodes

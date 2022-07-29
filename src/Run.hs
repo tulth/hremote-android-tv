@@ -3,7 +3,8 @@
 {-# LANGUAGE LambdaCase #-}
 module Run
   (
-    run
+    mqttLoop
+  , eventSendLoop
   , mqttMsgToEventCode
   , mqttMsgToEventCmd
   ) where
@@ -60,16 +61,4 @@ mqttLoop queue = do
 mqttMsgToEventCmd :: String -> String -> [(String, Int)] -> MqttMsg -> Maybe String
 mqttMsgToEventCmd device topicPrefix butEcPairs msg =
   eventCodeToEventCmd device <$> mqttMsgToEventCode topicPrefix butEcPairs msg
-
-run :: RIO App ()
-run = do
-  hSetBuffering stdout LineBuffering
-  hSetBuffering stderr LineBuffering
-  queue <- newTBQueueIO 8
-  logInfo "Starting up"
-  forever $ do
-    race_
-      (mqttLoop queue)
-      (eventSendLoop queue)
-    logError "mainApp: eventProcess or mqttWatch died, restarting"
 
