@@ -45,7 +45,7 @@ import RIO (TBQueue, writeTBQueue, atomically)
 import Events (buttonToEventCode)
 
 type API = "status" :> Get '[PlainText] String
-           :<|> "remote" :> Get '[HTML] Remotepage
+           :<|> Get '[HTML] Remotepage
            :<|> "button" :> Capture "buttonName" ButtonName
                          :> ReqBody '[PlainText] ButtonAction
                          :> Post '[PlainText] ButtonAction
@@ -68,7 +68,7 @@ corsPolicy = cors (const $ Just policy)
 startServer :: TBQueue Int -> IO ()
 startServer queue = do
     withStdoutLogger $ \aplogger -> do
-        let settings = setPort 9080 $ setLogger aplogger defaultSettings
+        let settings = setPort 8002 $ setLogger aplogger defaultSettings
         runSettings settings $ serverApp queue
 
 serverApp :: TBQueue Int -> Application
@@ -122,7 +122,7 @@ remoteDemo =
       H.meta ! A.charset "UTF-8"
       H.meta ! A.name "viewport" ! A.content "width=device-width, initial-scale=1.0"
       H.title "tv-remote"
-      H.link ! A.rel "shortcut icon" ! A.type_ "image/png" ! A.href "http://tv-remote:8002/tv-remote.png"
+      H.link ! A.rel "shortcut icon" ! A.type_ "image/png" ! A.href "http://nginx:8088/assets/icons/tv-remote.png"
       H.preEscapedText $ ""
         <> "<style>"
         <> "  * {"
